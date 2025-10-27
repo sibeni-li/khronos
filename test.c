@@ -1,21 +1,45 @@
 #include <stdio.h>
 #include <time.h>
 
-// Simpler program to analyse the execution time of do-while loop
+
+// Create a data structure for a function profile
+typedef struct
+{
+    char *name;
+    double exec_time;
+} function;
+
+// Create an array to store all the profiled functions (only one for now)
+function functions[1];
+
+// Prototypes
+void test_function(void);
+
+// Simpler program to analyse the execution time of a function
 int main(void)
 {
-    int i = 0;
-    
+    functions[0].name = "test_function";
     clock_t start = clock();
 
-    while (i < 1000000)
-    {
-        i++;
-    }
+    test_function();
 
     clock_t end = clock();
 
     double cpu_duration = (double) (end - start) / CLOCKS_PER_SEC;
 
+    functions[0].exec_time = cpu_duration;
+
     printf("This program is executed in %f\n", cpu_duration);
+    printf("The function's name is %s\n", functions[0].name);
+    printf("The function execution time is %f\n", functions[0].exec_time);
+}
+
+// Function to test my program
+void test_function(void)
+{
+    int i = 0;
+    while (i < 1000000)
+    {
+        i++;
+    }
 }
