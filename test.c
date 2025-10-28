@@ -1,40 +1,73 @@
 #include <stdio.h>
 #include <time.h>
 
-
-// Create a data structure for a function profile
+// Data structure for a function profile
 typedef struct
 {
     char *name;
     double exec_time;
 } function;
 
-// Create an array to store all the profiled functions (only one for now)
-function functions[1];
+// Array to store all the profiled functions
+function functions[3];
+
+// Variables
+int count = 0;
+clock_t start, end;
+double cpu_duration;
+double total_time;
 
 // Prototypes
+void start_profiler(char *fct_name);
+void stop_profiler(void);
+void save_data(void);
+
 void test_function_speed(void);
 void test_function_med(void);
 void test_function_slow(void);
 
-// Simpler program to analyse the execution time of a function
 int main(void)
-{
-    functions[0].name = "test_function";
-    clock_t start = clock();
+{   
+    start_profiler("test_function_speed");
+    test_function_speed();
+    stop_profiler();
 
-    test_function();
+    start_profiler("test_function_med");
+    test_function_med();
+    stop_profiler();
 
-    clock_t end = clock();
-    double cpu_duration = (double) (end - start) / CLOCKS_PER_SEC;
-    functions[0].exec_time = cpu_duration;
+    start_profiler("test_function_slow");
+    test_function_slow();
+    stop_profiler();
 
-    printf("This program is executed in %f\n", cpu_duration);
-    printf("The function's name is %s\n", functions[0].name);
-    printf("The function execution time is %f\n", functions[0].exec_time);
+    save_data();   
 }
 
-// Function to test my program
+void start_profiler(char *fct_name)
+{
+    functions[count].name = fct_name;
+    start = clock();
+}
+
+void stop_profiler(void)
+{
+    end = clock();
+    cpu_duration = (double) (end - start) / CLOCKS_PER_SEC;
+    functions[count].exec_time = cpu_duration;
+    count ++;
+    total_time += cpu_duration;
+}
+
+void save_data(void)
+{
+    for (int i = 0; i < count; i++)
+    {
+        printf("The function's name is %s\n", functions[i].name);
+        printf("The function execution time is %f\n", functions[i].exec_time);   
+    }
+    printf("This program was executed in %f seconds\n", total_time);
+}
+
 void test_function_speed(void)
 {
     int i = 0;
