@@ -40,7 +40,8 @@ int main(void)
     test_function_slow();
     stop_profiler();
 
-    save_data();   
+    save_data();
+    return 0; 
 }
 
 void start_profiler(char *fct_name)
