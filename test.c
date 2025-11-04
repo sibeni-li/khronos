@@ -87,9 +87,21 @@ void profiler_init(void)
 
 void profiler_start(char *fct_name)
 {
+    if (global_profiler.initialized == false)
+    {
+        printf("Profiler not initialized\n");
+        return;
+    }
+    
     if (global_profiler.count >= global_profiler.capacity)
     {
         profiler_extend_capacity();
+    }
+
+    if (fct_name == NULL)
+    {
+        printf("Function name is NULL\n");
+        return;
     }
 
     for (int i = 0; i < global_profiler.count; i++)
@@ -101,8 +113,13 @@ void profiler_start(char *fct_name)
             functions[i].is_running = true;
             return;
         }
+        else if (functions[i].name != NULL && strcmp(functions[i].name, fct_name) == 0 && functions[i].is_running == true)
+        {
+            printf("Function %s is already running\n", fct_name);
+            return;
+        }
     }
-    
+
     functions[global_profiler.count].name = fct_name;
     functions[global_profiler.count].start_time = clock();
     functions[global_profiler.count].exec_time = 0.0;
@@ -114,7 +131,21 @@ void profiler_start(char *fct_name)
 
 void profiler_stop(char *fct_name)
 {
+    if (global_profiler.initialized == false)
+    {
+        printf("Profiler not initialized\n");
+        return;
+    }
+
+    bool found = false;
     end = clock();
+
+    if (fct_name == NULL)
+    {
+        printf("Function name is NULL\n");
+        return;
+    }
+
     for (int i = 0; i < global_profiler.count; i++)
     {
         if (functions[i].name != NULL && strcmp(functions[i].name, fct_name) == 0 && functions[i].is_running == true)
@@ -123,8 +154,19 @@ void profiler_stop(char *fct_name)
             cpu_duration = (double) (end - functions[i].start_time) / CLOCKS_PER_SEC;
             functions[i].exec_time += cpu_duration;
             total_time += cpu_duration;
+            found = true;
             break;
         }
+        else if (functions[i].name != NULL && strcmp(functions[i].name, fct_name) == 0 && functions[i].is_running == false)
+        {
+            printf("Function %s was not running\n", fct_name);
+            return;
+        }
+    }
+
+    if (found == false)
+    {
+        printf("Function %s not found in profiler\n", fct_name);
     }
 }
 
@@ -153,6 +195,8 @@ void profiler_extend_capacity(void)
 void profiler_cleanup(void)
 {
     free(functions);
+    functions = NULL;
+    global_profiler = (profiler){0, 0, false};
 }
 
 void test_function_speed(void)
