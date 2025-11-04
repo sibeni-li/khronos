@@ -1,4 +1,4 @@
-
+#define _DEFAULT_SOURCE
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -135,7 +135,7 @@ void profiler_stop(char *fct_name)
     }
 }
 
-void save_data(void)
+void profiler_save_data(void)
 {
     FILE *file = fopen("profiler_data.json", "w");
     if (!file)
