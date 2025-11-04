@@ -1,9 +1,13 @@
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
+#include "profiler.h"
+
+// Data structure for the profiler
 typedef struct
 {
     int count;
@@ -21,54 +25,15 @@ typedef struct
     bool is_running;
 } function_profile;
 
+// Global variables
 profiler global_profiler = {0, 0, false};
 function_profile *functions = NULL;
-
-// Variables
 clock_t end;
 double cpu_duration;
 double total_time;
 
-// Prototypes
-void profiler_init(void);
-void profiler_start(char *fct_name);
-void profiler_stop(char *fct_name);
-void save_data(void);
+// Private prototype
 void profiler_extend_capacity(void);
-void profiler_cleanup(void);
-
-void test_function_speed(void);
-void test_function_med(void);
-void test_function_slow(void);
-
-int main(void)
-{
-    profiler_init();
-
-    profiler_start("test_function_speed");
-    test_function_speed();
-    profiler_stop("test_function_speed");
-
-    profiler_start("test_function_med");
-    test_function_med();
-    profiler_stop("test_function_med");
-
-    profiler_start("test_function_med");
-    test_function_med();
-    profiler_stop("test_function_med");
-
-    profiler_start("test_function_speed");
-    test_function_speed();
-    profiler_stop("test_function_speed");
-
-    profiler_start("test_function_slow");
-    test_function_slow();
-    profiler_stop("test_function_slow");
-
-    save_data();
-    profiler_cleanup();
-    return 0;
-}
 
 void profiler_init(void)
 {
@@ -217,31 +182,4 @@ void profiler_cleanup(void)
     free(functions);
     functions = NULL;
     global_profiler = (profiler){0, 0, false};
-}
-
-void test_function_speed(void)
-{
-    int i = 0;
-    while (i < 1000000)
-    {
-        i++;
-    }
-}
-
-void test_function_med(void)
-{
-    int i = 0;
-    while (i < 5000000)
-    {
-        i++;
-    }
-}
-
-void test_function_slow(void)
-{
-    int i = 0;
-    while (i < 10000000)
-    {
-        i++;
-    }
 }
