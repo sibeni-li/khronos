@@ -42,29 +42,29 @@ void test_function_med(void);
 void test_function_slow(void);
 
 int main(void)
-{   
+{
     profiler_init();
-    
+
     profiler_start("test_function_speed");
     test_function_speed();
     profiler_stop("test_function_speed");
-    
-    profiler_start("test_function_med");
-    test_function_med();
-    profiler_stop("test_function_med");
 
     profiler_start("test_function_med");
     test_function_med();
     profiler_stop("test_function_med");
 
+    profiler_start("test_function_med");
+    test_function_med();
+    profiler_stop("test_function_med");
+
     profiler_start("test_function_speed");
     test_function_speed();
     profiler_stop("test_function_speed");
-    
+
     profiler_start("test_function_slow");
     test_function_slow();
     profiler_stop("test_function_slow");
-    
+
     save_data();
     profiler_cleanup();
     return 0;
@@ -92,7 +92,7 @@ void profiler_start(char *fct_name)
         printf("Profiler not initialized\n");
         return;
     }
-    
+
     if (global_profiler.count >= global_profiler.capacity)
     {
         profiler_extend_capacity();
@@ -172,13 +172,33 @@ void profiler_stop(char *fct_name)
 
 void save_data(void)
 {
+    FILE *file = fopen("profiler_data.json", "w");
+    if (!file)
+    {
+        printf("The file couldn't open");
+        return;
+    }
+
+    fprintf(file, "{\n");
+    fprintf(file, "  \"total_time\": %f,\n", total_time);
+    fprintf(file, "  \"functions\": [\n");
+
     for (int i = 0; i < global_profiler.count; i++)
     {
-        printf("The function's name is %s\n", functions[i].name);
-        printf("The function execution time is %f\n", functions[i].exec_time);
-        printf("The function was called %d times\n", functions[i].call_count);
+        fprintf(file, "    {\"name\": \"%s\", \"exec_time\": %f, \"call_count\": %i}", functions[i].name, functions[i].exec_time, functions[i].call_count);
+        if (i != global_profiler.count - 1)
+        {
+            fprintf(file, ",\n");
+        }
+        else
+        {
+            fprintf(file, "\n");
+        }
     }
-    printf("This program was executed in %f seconds\n", total_time);
+    fprintf(file, "  ]\n");
+    fprintf(file, "}\n");
+
+    fclose(file);
 }
 
 void profiler_extend_capacity(void)
