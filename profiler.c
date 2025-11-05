@@ -1,4 +1,3 @@
-#define _DEFAULT_SOURCE
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,9 +32,9 @@ double cpu_duration;
 double total_time;
 
 // Private prototype
-void profiler_extend_capacity(void);
+int profiler_extend_capacity(void);
 
-void profiler_init(void)
+int profiler_init(void)
 {
     global_profiler.count = 0;
     global_profiler.capacity = 10;
@@ -44,62 +43,69 @@ void profiler_init(void)
     functions = malloc(global_profiler.capacity * sizeof(function_profile));
     if (functions == NULL)
     {
-        printf("Memory allocation failed\n");
-        exit(1);
+        return ERROR_MEMORY_ALLOCATION;
     }
-
+    return SUCCESS;
 }
 
-void profiler_start(char *fct_name)
+int profiler_start(char *fct_name)
 {
     if (global_profiler.initialized == false)
     {
-        printf("Profiler not initialized\n");
-        return;
+        return ERROR_NOT_INITIALIZED;
     }
 
     if (global_profiler.count >= global_profiler.capacity)
     {
         profiler_extend_capacity();
+        if (profiler_extend_capacity != SUCCESS)
+        {
+            return ERROR_MEMORY_ALLOCATION;
+        }
     }
 
     if (fct_name == NULL)
     {
-        printf("Function name is NULL\n");
-        return;
+        return ERROR_NULL_VALUE;
     }
 
     for (int i = 0; i < global_profiler.count; i++)
     {
-        if (functions[i].name != NULL && strcmp(functions[i].name, fct_name) == 0 && functions[i].is_running == false)
+        if (functions[i].name != NULL && strcmp(functions[i].name, fct_name) == 0 &&
+            functions[i].is_running == false)
         {
             functions[i].start_time = clock();
             functions[i].call_count += 1;
             functions[i].is_running = true;
-            return;
+            return SUCCESS;
         }
-        else if (functions[i].name != NULL && strcmp(functions[i].name, fct_name) == 0 && functions[i].is_running == true)
+        else if (functions[i].name != NULL && strcmp(functions[i].name, fct_name) == 0 &&
+                 functions[i].is_running == true)
         {
-            printf("Function %s is already running\n", fct_name);
-            return;
+            return ERROR_ALREADY_RUNNING;
         }
     }
 
-    functions[global_profiler.count].name = fct_name;
+    functions[global_profiler.count].name = strdup(fct_name);
+
+    if (functions[global_profiler.count].name == NULL)
+    {
+        return ERROR_MEMORY_ALLOCATION;
+    }
+
     functions[global_profiler.count].start_time = clock();
     functions[global_profiler.count].exec_time = 0.0;
     functions[global_profiler.count].call_count = 1;
     functions[global_profiler.count].is_running = true;
-    global_profiler.count ++;
-
+    global_profiler.count++;
+    return SUCCESS;
 }
 
-void profiler_stop(char *fct_name)
+int profiler_stop(char *fct_name)
 {
     if (global_profiler.initialized == false)
     {
-        printf("Profiler not initialized\n");
-        return;
+        return ERROR_NOT_INITIALIZED;
     }
 
     bool found = false;
@@ -107,13 +113,13 @@ void profiler_stop(char *fct_name)
 
     if (fct_name == NULL)
     {
-        printf("Function name is NULL\n");
-        return;
+        return ERROR_NULL_VALUE;
     }
 
     for (int i = 0; i < global_profiler.count; i++)
     {
-        if (functions[i].name != NULL && strcmp(functions[i].name, fct_name) == 0 && functions[i].is_running == true)
+        if (functions[i].name != NULL && strcmp(functions[i].name, fct_name) == 0 &&
+            functions[i].is_running == true)
         {
             functions[i].is_running = false;
             cpu_duration = (double) (end - functions[i].start_time) / CLOCKS_PER_SEC;
@@ -122,26 +128,27 @@ void profiler_stop(char *fct_name)
             found = true;
             break;
         }
-        else if (functions[i].name != NULL && strcmp(functions[i].name, fct_name) == 0 && functions[i].is_running == false)
+        else if (functions[i].name != NULL && strcmp(functions[i].name, fct_name) == 0 &&
+                 functions[i].is_running == false)
         {
-            printf("Function %s was not running\n", fct_name);
-            return;
+            return ERROR_NOT_RUNNING;
         }
     }
 
     if (found == false)
     {
-        printf("Function %s not found in profiler\n", fct_name);
+        return ERROR_NOT_FOUND;
     }
+
+    return SUCCESS;
 }
 
-void profiler_save_data(void)
+int profiler_save_data(void)
 {
     FILE *file = fopen("profiler_data.json", "w");
     if (!file)
     {
-        printf("The file couldn't open");
-        return;
+        return ERROR_COULD_NOT_OPEN;
     }
 
     fprintf(file, "{\n");
@@ -150,7 +157,8 @@ void profiler_save_data(void)
 
     for (int i = 0; i < global_profiler.count; i++)
     {
-        fprintf(file, "    {\"name\": \"%s\", \"exec_time\": %f, \"call_count\": %i}", functions[i].name, functions[i].exec_time, functions[i].call_count);
+        fprintf(file, "    {\"name\": \"%s\", \"exec_time\": %f, \"call_count\": %i}",
+                functions[i].name, functions[i].exec_time, functions[i].call_count);
         if (i != global_profiler.count - 1)
         {
             fprintf(file, ",\n");
@@ -164,22 +172,31 @@ void profiler_save_data(void)
     fprintf(file, "}\n");
 
     fclose(file);
+
+    return SUCCESS;
 }
 
-void profiler_extend_capacity(void)
+int profiler_extend_capacity(void)
 {
     global_profiler.capacity *= 2;
     functions = realloc(functions, global_profiler.capacity * sizeof(function_profile));
     if (functions == NULL)
     {
-        printf("Memory reallocation failed\n");
-        exit(1);
+        return ERROR_MEMORY_ALLOCATION;
     }
+
+    return SUCCESS;
 }
 
-void profiler_cleanup(void)
+int profiler_cleanup(void)
 {
+    for (int i = 0; i < global_profiler.count; i ++)
+    {
+        free(functions[i].name);
+    }
     free(functions);
     functions = NULL;
-    global_profiler = (profiler){0, 0, false};
+    global_profiler = (profiler) {0, 0, false};
+
+    return SUCCESS;
 }
