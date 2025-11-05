@@ -83,12 +83,12 @@ int profiler_start(char *fct_name)
         }
     }
 
-    global_profiler.functions[global_profiler.count].name = strdup(fct_name);
-
-    if (global_profiler.functions[global_profiler.count].name == NULL)
+    global_profiler.functions[global_profiler.count].name  = malloc(strlen(fct_name) +1);
+    if (global_profiler.functions[global_profiler.count].name  == NULL)
     {
         return ERROR_MEMORY_ALLOCATION;
     }
+    strcpy(global_profiler.functions[global_profiler.count].name, fct_name);
 
     global_profiler.functions[global_profiler.count].start_time = clock();
     global_profiler.functions[global_profiler.count].exec_time = 0.0;
