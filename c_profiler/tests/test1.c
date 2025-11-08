@@ -1,4 +1,4 @@
-#include "profiler.h"
+#include "../profiler.h"
 
 void test_function_speed(void);
 void test_function_med(void);
