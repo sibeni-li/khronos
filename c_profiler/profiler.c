@@ -34,6 +34,7 @@ int profiler_extend_capacity(void);
 
 int profiler_init(void)
 {
+    // Initialize profiler structure
     global_profiler.count = 0;
     global_profiler.capacity = 10;
 
@@ -56,7 +57,6 @@ int profiler_start(char *fct_name)
     // Expand capacity if needed
     if (global_profiler.count >= global_profiler.capacity)
     {
-        profiler_extend_capacity();
         if (profiler_extend_capacity() != SUCCESS)
         {
             return ERROR_MEMORY_ALLOCATION;
@@ -155,24 +155,41 @@ int profiler_stop(char *fct_name)
     return SUCCESS;
 }
 
-int profiler_save_data(void)
+int profiler_save_data(char *program_name)
 {
-    FILE *file = fopen("profiler_data.json", "w");
+    // Create timestamp
+    time_t now = time(NULL);
+    struct tm *t = localtime(&now);
+    char timestamp[64];
+    strftime(timestamp, sizeof(timestamp), "%Y-%m-%dT%H:%M:%S", t);
+
+    // Create filename
+    char filename[256];
+    snprintf(filename, sizeof(filename), "profiler_data_%s.json", program_name);
+
+    // Open file in writing mode
+    FILE *file = fopen(filename, "w");
     if (!file)
     {
         return ERROR_COULD_NOT_OPEN;
     }
 
-    // Write JSON opening and total time
+    // Write JSON opening and metadata
     fprintf(file, "{\n");
-    fprintf(file, "  \"total_time\": %f,\n", global_profiler.total_time);
+    fprintf(file, "  \"metadata\": {\n");
+    fprintf(file, "    \"total_time\": %f,\n", global_profiler.total_time);
+    fprintf(file, "    \"program_name\": \"%s\",\n", program_name);
+    fprintf(file, "    \"timestamp\": \"%s\"\n", timestamp);
+    fprintf(file, "  },\n");
     fprintf(file, "  \"functions\": [\n");
 
     // Write each function's data
     for (int i = 0; i < global_profiler.count; i++)
     {
-        fprintf(file, "    {\"name\": \"%s\", \"exec_time\": %f, \"call_count\": %i}",
-                global_profiler.functions[i].name, global_profiler.functions[i].exec_time, global_profiler.functions[i].call_count);
+        double avg_time = global_profiler.functions[i].exec_time / global_profiler.functions[i].call_count;
+
+        fprintf(file, "    {\"name\": \"%s\", \"exec_time\": %f, \"call_count\": %i, \"avg_time\": %f}",
+                global_profiler.functions[i].name, global_profiler.functions[i].exec_time, global_profiler.functions[i].call_count, avg_time);
         // Add comma between elements, but not after last one
         if (i != global_profiler.count - 1)
         {
@@ -187,6 +204,7 @@ int profiler_save_data(void)
     fprintf(file, "  ]\n");
     fprintf(file, "}\n");
 
+    // Close file
     fclose(file);
 
     return SUCCESS;
@@ -194,6 +212,7 @@ int profiler_save_data(void)
 
 int profiler_extend_capacity(void)
 {
+    // Double the capacity
     global_profiler.capacity *= 2;
     global_profiler.functions = realloc(global_profiler.functions, global_profiler.capacity * sizeof(function_profile));
     if (global_profiler.functions == NULL)
