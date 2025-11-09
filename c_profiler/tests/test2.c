@@ -12,7 +12,7 @@ int main(void) {
         profiler_stop("repeated_task");
     }
     
-    profiler_save_data();
+    profiler_save_data("test2");
     profiler_cleanup();
     return 0;
 }

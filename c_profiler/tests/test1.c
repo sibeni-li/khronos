@@ -20,7 +20,7 @@ int main(void)
     test_function_slow();
     profiler_stop("test_function_slow");
 
-    profiler_save_data();
+    profiler_save_data("test1");
     profiler_cleanup();
     return 0;
 }
