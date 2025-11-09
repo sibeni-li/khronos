@@ -14,7 +14,7 @@
 int profiler_init(void);
 int profiler_start(char *fct_name);
 int profiler_stop(char *fct_name);
-int profiler_save_data(void);
+int profiler_save_data(char *program_name);
 int profiler_cleanup(void);
 
 #endif
