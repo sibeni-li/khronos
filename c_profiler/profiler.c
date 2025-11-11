@@ -210,19 +210,6 @@ int profiler_save_data(char *program_name)
     return SUCCESS;
 }
 
-int profiler_extend_capacity(void)
-{
-    // Double the capacity
-    global_profiler.capacity *= 2;
-    global_profiler.functions = realloc(global_profiler.functions, global_profiler.capacity * sizeof(function_profile));
-    if (global_profiler.functions == NULL)
-    {
-        return ERROR_MEMORY_ALLOCATION;
-    }
-
-    return SUCCESS;
-}
-
 int profiler_cleanup(void)
 {
     // Free each function's name string
@@ -234,6 +221,20 @@ int profiler_cleanup(void)
     free(global_profiler.functions);
     // Reset profiler to initial state
     global_profiler = (profiler) {NULL, 0, 0, 0, 0};
+
+    return SUCCESS;
+}
+
+// Private function
+int profiler_extend_capacity(void)
+{
+    // Double the capacity
+    global_profiler.capacity *= 2;
+    global_profiler.functions = realloc(global_profiler.functions, global_profiler.capacity * sizeof(function_profile));
+    if (global_profiler.functions == NULL)
+    {
+        return ERROR_MEMORY_ALLOCATION;
+    }
 
     return SUCCESS;
 }
