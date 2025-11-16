@@ -1,0 +1,69 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Home
+{% endblock %}
+
+{% block main %}
+    <section class="container-fluid mb-5">
+        <h1 class="mb-5">Khronos</h1>
+        <p>A lightweight, easy-to-use profiling library for C programs</p>
+        <p>Measure execution time, track function calls, and visualize performance with beautiful web-based reports.</p>
+        <a href="/download">
+            <button type="button" class="btn btn-info">Download Library Now! 🤓</button>
+        </a>
+    </section>
+    <section class="container-fluid mb-5">
+        <h2 class="mb-4">Why use Khronos?</h2>
+        <div>
+            <h3 class="mb-3">📊 Easy Integration</h3>
+            <p>Just include in your program and add simple start/stop calls around your functions</p>
+        </div>
+        <div>
+            <h3 class="mb-3">⚡ Minimal Overhead</h3>
+            <p>Lightweight design ensures profiling doesn't significantly impact your program's performance</p>
+        </div>
+        <div>
+            <h3 class="mb-3">📈 Visual Reports</h3>
+            <p>Upload your profiling data to get interactive charts and detailed analysis</p>
+        </div>
+    </section>
+    <section class="container-fluid">
+        <h2 class="mb-4">How to use khronos?</h2>
+        <div>
+            <h3 class="mb-3">1. Download and Include</h3>
+            <p>Download the library and add profiler.h and profiler.c to your project</p>
+            <pre><code>#include "path/to/profiler.h"</code></pre>
+        </div>
+        <div>
+            <h3 class="mb-3">2. Initialize</h3>
+            <p>Initialize the profiler at the top of your main function</p>
+            <pre><code>profiler_init();</code></pre>
+        </div>
+        <div>
+            <h3 class="mb-3">3. Profile Your Functions</h3>
+            <pre><code>profiler_start("my_function");
+my_function();
+profiler_stop("my_function");</code></pre>
+        </div>
+        <div>
+            <h3 class="mb-3">4. Save Data</h3>
+            <pre><code>profiler_save_data("my_program");</code></pre>
+        </div>
+        <div>
+            <h3 class="mb-3">5. Cleanup</h3>
+            <pre><code>profiler_cleanup();</code></pre>
+        </div>
+        <div>
+            <h3 class="mb-3">6. Compile and Run</h3>
+            <p>Compile your code with:</p>
+            <pre><code>gcc -o my_program path/to/profiler.c path/to/my_program.c</code></pre>
+            <p>Run your code with:</p>
+            <pre><code>./my_program</code></pre>
+        </div>
+        <div>
+            <h3 class="mb-3">7. Visualize</h3>
+            <p>Register an account, upload your JSON file, and explore your performance data with interactive charts!</p>
+        </div>
+    </section>
+{% endblock %}
