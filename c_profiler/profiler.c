@@ -161,7 +161,7 @@ int profiler_save_data(char *program_name)
     time_t now = time(NULL);
     struct tm *t = localtime(&now);
     char timestamp[64];
-    strftime(timestamp, sizeof(timestamp), "%Y-%m-%dT%H:%M:%S", t);
+    strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", t);
 
     // Create filename
     char filename[256];
