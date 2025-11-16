@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Upload
+{% endblock %}
+
+{% block main %}
+    <div class="container mt-4">
+        <h2>Upload Profile Data</h2>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="file" class="form-label">Select Profile Data File</label>
+                <input class="form-control" type="file" id="file" name="file" accept="application/json" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Upload</button>
+        </form>
+    </div>
+{% endblock %}
