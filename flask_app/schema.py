@@ -45,6 +45,15 @@ def get_user_by_username(username):
     conn.close()
     return user
 
+def get_history(user_id):
+    conn = sqlite3.connect('profiles.db')
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT program_name, total_time, timestamp FROM analysis WHERE user_id = ? ORDER BY timestamp DESC", (user_id,))
+    history = c.fetchall()
+    conn.close()
+    return history
+
 # Insert into tables
 def insert_user(username, hash_password):
     conn = sqlite3.connect('profiles.db')

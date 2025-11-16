@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 
 
 from helpers import login_required, validate_json_struct
-from schema import create_table, get_user_by_username, insert_user, insert_analysis, insert_function
+from schema import create_table, get_user_by_username, insert_user, insert_analysis, insert_function, get_history
 
 app = Flask(__name__)
 
@@ -51,11 +51,17 @@ def download():
     )
 
 
-# TODO
 @app.route("/history")
 @login_required
 def history():
-    return render_template("history")
+    user_id = session["user_id"]
+    if not user_id:
+        flash("User not logged in")
+        return redirect("/login")
+    
+    analyses = get_history(user_id)
+
+    return render_template("history.html", analyses=analyses)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -94,6 +100,7 @@ def login():
 
         # Redirect user to home page
         return redirect("/")
+    
     return render_template("login.html")
 
 
@@ -101,6 +108,7 @@ def login():
 @login_required
 def logout():
     session.clear()
+    
     return redirect("/")
 
 
@@ -145,6 +153,7 @@ def report():
 @login_required
 def upload():
     if request.method == "POST":
+
         if "file" not in request.files:
             flash("Provide a file")
             return render_template("upload.html")

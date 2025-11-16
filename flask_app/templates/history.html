@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    History
+{% endblock %}
+
+{% block main %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Program Name</th>
+                <th scope="col">Total time</th>
+                <th scope="col">Analysed at</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for analysis in analyses %}
+                <tr>
+                    <td>{{ analysis["program_name"] }}</td>
+                    <td>{{ analysis["total_time"] }}</td>
+                    <td>{{ analysis["timestamp"] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
