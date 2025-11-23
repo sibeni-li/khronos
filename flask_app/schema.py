@@ -1,6 +1,8 @@
 import sqlite3
 
 # Create tables if not exists
+
+
 def create_table():
     conn = sqlite3.connect('profiles.db')
     c = conn.cursor()
@@ -36,6 +38,8 @@ def create_table():
     conn.close()
 
 # Get data
+
+
 def get_user_by_username(username):
     conn = sqlite3.connect('profiles.db')
     conn.row_factory = sqlite3.Row
@@ -44,6 +48,37 @@ def get_user_by_username(username):
     user = c.fetchone()
     conn.close()
     return user
+
+
+def get_analyses(user_id):
+    conn = sqlite3.connect('profiles.db')
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM analysis WHERE user_id = ?", (user_id,))
+    analyses = c.fetchall()
+    conn.close()
+    return analyses
+
+
+def get_analysis_by_id(user_id, analysis_id):
+    conn = sqlite3.connect('profiles.db')
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM analysis WHERE user_id = ? AND id = ?", (user_id, analysis_id,))
+    analyses = c.fetchone()
+    conn.close()
+    return analyses
+
+
+def get_functions_by_analysis_id(analysis_id):
+    conn = sqlite3.connect('profiles.db')
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM functions WHERE analysis_id = ?", (analysis_id,))
+    functions = c.fetchall()
+    conn.close()
+    return functions
+
 
 def get_history(user_id):
     conn = sqlite3.connect('profiles.db')
@@ -55,6 +90,8 @@ def get_history(user_id):
     return history
 
 # Insert into tables
+
+
 def insert_user(username, hash_password):
     conn = sqlite3.connect('profiles.db')
     c = conn.cursor()
@@ -64,6 +101,7 @@ def insert_user(username, hash_password):
     user_id = c.lastrowid
     conn.close()
     return user_id
+
 
 def insert_analysis(user_id, program_name, total_time, timestamp):
     conn = sqlite3.connect('profiles.db')
@@ -75,10 +113,11 @@ def insert_analysis(user_id, program_name, total_time, timestamp):
     conn.close()
     return analysis_id
 
+
 def insert_function(analysis_id, name, exec_time, call_count, avg_time):
     conn = sqlite3.connect('profiles.db')
     c = conn.cursor()
-    c.execute(" INSERT INTO functions (analysis_id, exec_time, name, call_count, avg_time) VALUES (?, ?, ?, ?, ?)",
+    c.execute(" INSERT INTO functions (analysis_id, name, exec_time, call_count, avg_time) VALUES (?, ?, ?, ?, ?)",
               (analysis_id, name, exec_time, call_count, avg_time))
     conn.commit()
     function_id = c.lastrowid

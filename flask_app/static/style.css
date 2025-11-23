@@ -1,0 +1,38 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 8em;
+}
+
+h1 {
+    text-align: center;
+}
+
+h2 {
+    font-size: 1.7em;
+
+}
+
+.cards {
+    display: flex;
+    justify-content: space-between;
+    gap: 3em;
+}
+
+.card-report {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    gap: 2em;
+    width: 100%;
+    border: solid .3em;
+    border-radius: 50%;
+    border-color: grey;
+    aspect-ratio: 1/1;
+}
+
+.container-charts {
+    display: flex;
+    justify-content: space-between;
+}

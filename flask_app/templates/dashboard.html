@@ -1,12 +1,26 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    History
+    Dashboard
 {% endblock %}
 
 {% block main %}
     <div class="container mt-4">
-        <h1>History</h1>
+        <h1>Dashboard</h1>
+        <div class="cards">
+            <div class="card-report">
+                <h2>Programs analyzed</h2>
+                <p>{{ nb_analyses }}</p>
+            </div>
+            <div class="card-report">
+                <h2>Average time per analysis</h2>
+                <p>{{ avg_t_analysis }} sec.</p>
+            </div>
+            <div class="card-report">
+                <h2>Total time analyzed</h2>
+                <p>{{ total_time_analyzed }} sec.</p>
+            </div>
+        </div>
         <table class="table table-striped table-bordered">
             <thead>
                 <tr>
@@ -18,7 +32,7 @@
             <tbody>
                 {% for analysis in analyses %}
                     <tr>
-                        <td>{{ analysis["program_name"] }}</td>
+                        <td><a href="{{ url_for('report', analysis_id=analysis['id']) }}">{{ analysis["program_name"] }}</a></td>
                         <td>{{ analysis["total_time"] }}</td>
                         <td>{{ analysis["timestamp"] }}</td>
                     </tr>

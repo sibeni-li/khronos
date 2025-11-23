@@ -31,4 +31,3 @@ def validate_json_struct(data):
     for d in data["functions"]:
         if "name" not in d or "exec_time" not in d or "call_count" not in d or "avg_time" not in d:
             raise ValueError("Invalid JSON structure")
-

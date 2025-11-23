@@ -1,14 +1,14 @@
 import json
 import os
 
-from flask import Flask, flash, jsonify, redirect, render_template, request, send_file, session
+from flask import Flask, flash, redirect, render_template, request, send_file, session
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 
 from helpers import login_required, validate_json_struct
-from schema import create_table, get_user_by_username, insert_user, insert_analysis, insert_function, get_history
+from schema import create_table, get_user_by_username, insert_user, insert_analysis, insert_function, get_history, get_analyses, get_analysis_by_id, get_functions_by_analysis_id
 
 app = Flask(__name__)
 
@@ -34,11 +34,24 @@ def index():
     return render_template("index.html")
 
 
-# TODO
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("dashboard.html")
+    analyses = get_analyses(session["user_id"])
+    if not analyses:
+        flash("You have any analyses uploaded")
+        return redirect("/upload")
+
+    nb_analyses = 0
+    total_time_analyzed = 0
+
+    for analysis in analyses:
+        nb_analyses += 1
+        total_time_analyzed += analysis["total_time"]
+
+    avg_t_analysis = total_time_analyzed / nb_analyses
+
+    return render_template("dashboard.html", analyses=analyses, nb_analyses=nb_analyses, total_time_analyzed=total_time_analyzed, avg_t_analysis=avg_t_analysis)
 
 
 @app.route("/download")
@@ -54,12 +67,7 @@ def download():
 @app.route("/history")
 @login_required
 def history():
-    user_id = session["user_id"]
-    if not user_id:
-        flash("User not logged in")
-        return redirect("/login")
-    
-    analyses = get_history(user_id)
+    analyses = get_history(session["user_id"])
 
     return render_template("history.html", analyses=analyses)
 
@@ -100,7 +108,7 @@ def login():
 
         # Redirect user to home page
         return redirect("/")
-    
+
     return render_template("login.html")
 
 
@@ -108,7 +116,7 @@ def login():
 @login_required
 def logout():
     session.clear()
-    
+
     return redirect("/")
 
 
@@ -142,11 +150,30 @@ def register():
     return render_template("register.html")
 
 
-# TODO
-@app.route("/report")
+@app.route("/report/<int:analysis_id>")
 @login_required
-def report():
-    return render_template("report.html")
+def report(analysis_id):
+
+    analysis = get_analysis_by_id(session["user_id"], analysis_id)
+    if not analysis:
+        flash("Wrong analysis")
+        return redirect("/dashboard")
+    functions = get_functions_by_analysis_id(analysis_id)
+
+    prgm_name = analysis["program_name"]
+    prgm_time = analysis["total_time"]
+    nb_functions = 0
+    most_call = 0
+
+    for function in functions:
+        nb_functions += 1
+        if function["call_count"] > most_call:
+            most_call = function["call_count"]
+        print(function["name"])
+
+    functions_json = json.dumps([dict(function) for function in functions])
+
+    return render_template("report.html", prgm_name=prgm_name, prgm_time=prgm_time, nb_functions=nb_functions, most_call=most_call, functions=functions, functions_json=functions_json)
 
 
 @app.route("/upload", methods=["GET", "POST"])
@@ -186,14 +213,15 @@ def upload():
                 os.remove(f"uploads/{filename}")
                 return render_template("upload.html")
 
-            analysis_id = insert_analysis(session["user_id"], data["metadata"]["program_name"], data["metadata"]["total_time"], data["metadata"]["timestamp"])
+            analysis_id = insert_analysis(
+                session["user_id"], data["metadata"]["program_name"], data["metadata"]["total_time"], data["metadata"]["timestamp"])
 
             for function in data["functions"]:
-                insert_function(analysis_id, function["name"], function["exec_time"], function["call_count"], function["avg_time"])
-
+                insert_function(
+                    analysis_id, function["name"], function["exec_time"], function["call_count"], function["avg_time"])
 
         os.remove(f"uploads/{filename}")
 
-        return redirect("/report")
+        return redirect(f"/report/{analysis_id}")
 
     return render_template("upload.html")
