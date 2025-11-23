@@ -1,7 +1,7 @@
 import json
 import os
 
-from flask import Flask, flash, redirect, render_template, request, send_file, session
+from flask import Flask, flash, jsonify, redirect, render_template, request, send_file, session
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
