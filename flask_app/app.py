@@ -7,7 +7,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 
-from helpers import login_required, validate_json_struct
+from helpers import login_required, validate_json_struct, validate_upload_file, flash_and_render
 from schema import create_table, get_user_by_username, insert_user, insert_analysis, insert_function, get_history, get_analyses, get_analysis_by_id, get_functions_by_analysis_id
 
 app = Flask(__name__)
@@ -17,6 +17,7 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
+# Initialize database tables
 create_table()
 
 
@@ -31,17 +32,26 @@ def after_request(response):
 
 @app.route("/")
 def index():
+    """
+    Displays information about the Khronos profiling library
+    """
     return render_template("index.html")
 
 
 @app.route("/dashboard")
 @login_required
 def dashboard():
+    """
+    Displays user's analysis summary
+    Shows statistics and list of all analyses for logged-in user
+    """
+    # Get all analyses for current user
     analyses = get_analyses(session["user_id"])
     if not analyses:
         flash("You have any analyses uploaded")
         return redirect("/upload")
 
+    # Calculate stats
     nb_analyses = 0
     total_time_analyzed = 0
 
@@ -56,6 +66,9 @@ def dashboard():
 
 @app.route("/download")
 def download():
+    """
+    Serve the Khronos library zip file
+    """
     return send_file(
         'utils/khronoslib.zip',
         mimetype='application/zip',
@@ -67,6 +80,9 @@ def download():
 @app.route("/history")
 @login_required
 def history():
+    """
+    Displays list of all user's analyses ordered by timestamp
+    """
     analyses = get_history(session["user_id"])
 
     return render_template("history.html", analyses=analyses)
@@ -82,26 +98,22 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
         if not username:
-            flash("must provide username")
-            return render_template("login.html")
+            return flash_and_render("must provide username", "login.html")
 
         # Ensure password was submitted
         elif not password:
-            flash("must provide password")
-            return render_template("login.html")
+            return flash_and_render("must provide password", "login.html")
 
         # Query database for username
         rows = get_user_by_username(username)
         if not rows:
-            flash("invalid username and/or password")
-            return render_template("login.html")
+            return flash_and_render("invalid username and/or password", "login.html")
 
         # Ensure username exists and password is correct
         if not check_password_hash(
             rows["hash_password"], password
         ):
-            flash("invalid username and/or password")
-            return render_template("login.html")
+            return flash_and_render("invalid username and/or password", "login.html")
 
         # Remember which user has logged in
         session["user_id"] = rows["id"]
@@ -115,6 +127,9 @@ def login():
 @app.route("/logout")
 @login_required
 def logout():
+    """
+    Clear user session
+    """
     session.clear()
 
     return redirect("/")
@@ -124,25 +139,27 @@ def logout():
 def register():
     if request.method == "POST":
 
+        # Get form data
         username = request.form.get("username")
         password = request.form.get("password")
         confirmation = request.form.get("confirmation")
 
+        # Validate input
         if not username:
-            flash("Must provide username")
-            return render_template("register.html")
+            return flash_and_render("Must provide username", "register.html")
         elif not password or not confirmation or password != confirmation:
-            flash("Must provide and confirm password")
-            return render_template("register.html")
+            return flash_and_render("Must provide and confirm password", "register.html")
 
+        # Try to create new user
         try:
             insert_user(username, generate_password_hash(password))
         except:
-            flash("Username already exists")
-            return render_template("register.html")
+            return flash_and_render("Username already exists", "register.html")
 
+        # Get newly created user
         rows = get_user_by_username(username)
 
+        # Log user in automatically
         session["user_id"] = rows["id"]
 
         return redirect("/")
@@ -153,24 +170,33 @@ def register():
 @app.route("/report/<int:analysis_id>")
 @login_required
 def report(analysis_id):
+    """
+    Displays detailed analysis for a specific program
+    Shows statistics, charts, and function-level profiling data
+    """
 
+    # Verify user owns this analysis
     analysis = get_analysis_by_id(session["user_id"], analysis_id)
     if not analysis:
         flash("Wrong analysis")
         return redirect("/dashboard")
+    # Get all functions for this analysis
     functions = get_functions_by_analysis_id(analysis_id)
 
+    # Extract metadata
     prgm_name = analysis["program_name"]
     prgm_time = analysis["total_time"]
     nb_functions = 0
     most_call = 0
 
+    # Calculate stats
     for function in functions:
         nb_functions += 1
         if function["call_count"] > most_call:
             most_call = function["call_count"]
         print(function["name"])
 
+    # Convert functions to JSON for JavaScript charts
     functions_json = json.dumps([dict(function) for function in functions])
 
     return render_template("report.html", prgm_name=prgm_name, prgm_time=prgm_time, nb_functions=nb_functions, most_call=most_call, functions=functions, functions_json=functions_json)
@@ -179,49 +205,68 @@ def report(analysis_id):
 @app.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload():
+    """
+    Handle profiler data file uploads
+    """
     if request.method == "POST":
 
-        if "file" not in request.files:
-            flash("Provide a file")
-            return render_template("upload.html")
+        # Validate upload file
+        valid, result = validate_upload_file(request)
+        if not valid:
+            return flash_and_render(result, "upload.html")
 
-        req = request.files["file"]
-
-        if not req:
-            flash("Provide a file")
-            return render_template("upload.html")
-
-        if req.filename == "":
-            flash("Provide a file")
-            return render_template("upload.html")
-
-        if not req.filename.endswith(".json"):
-            flash("Provide a json file")
-            return render_template("upload.html")
-
+        # Secure the filename and save it temporarily
+        req = result
         filename = secure_filename(req.filename)
-        req.save(f"uploads/{filename}")
+        filepath = f"uploads/{filename}"
+        req.save(filepath)
 
-        with open(f"uploads/{filename}", 'r') as file:
+        try:
+            # Read and parse JSON file
+            with open(filepath, 'r') as file:
+                data = json.load(file)
 
-            data = json.load(file)
+                # Validate if the JSON structure matches with expected format
+                try:
+                    validate_json_struct(data)
+                except ValueError as e:
+                    return flash_and_render(f"Invalid JSON structure: {str(e)}", "upload.html")
 
-            try:
-                validate_json_struct(data)
-            except ValueError:
-                flash(str(ValueError))
-                os.remove(f"uploads/{filename}")
-                return render_template("upload.html")
+                # Save to DB
+                try:
+                    # Insert analysis metadata
+                    analysis_id = insert_analysis(
+                        session["user_id"],
+                        data["metadata"]["program_name"],
+                        data["metadata"]["total_time"],
+                        data["metadata"]["timestamp"]
+                    )
 
-            analysis_id = insert_analysis(
-                session["user_id"], data["metadata"]["program_name"], data["metadata"]["total_time"], data["metadata"]["timestamp"])
+                    # Insert each function's profiling data
+                    for function in data["functions"]:
+                        insert_function(
+                            analysis_id,
+                            function["name"],
+                            function["exec_time"],
+                            function["call_count"],
+                            function["avg_time"]
+                        )
 
-            for function in data["functions"]:
-                insert_function(
-                    analysis_id, function["name"], function["exec_time"], function["call_count"], function["avg_time"])
+                    # Redirect to report page for newly uploaded analysis
+                    return redirect(f"/report/{analysis_id}")
 
-        os.remove(f"uploads/{filename}")
+                except Exception as e:
+                    print(f"Database error in upload: {e}")
+                    return flash_and_render("Database error occurred while saving analysis", "upload.html")
 
-        return redirect(f"/report/{analysis_id}")
+        except json.JSONDecodeError:
+            return flash_and_render("Invalid JSON file", "upload.html")
+        except Exception as e:
+            print(f"Unexpected error in upload: {e}")
+            return flash_and_render("An error occurred processing your file", "upload.html")
+        finally:
+            # Clean up temporary file
+            if os.path.exists(filepath):
+                os.remove(filepath)
 
     return render_template("upload.html")
