@@ -229,12 +229,15 @@ int profiler_cleanup(void)
 int profiler_extend_capacity(void)
 {
     // Double the capacity
-    global_profiler.capacity *= 2;
-    global_profiler.functions = realloc(global_profiler.functions, global_profiler.capacity * sizeof(function_profile));
-    if (global_profiler.functions == NULL)
+    global_profiler.capacity *= 2;    
+
+    function_profile *temp = realloc(global_profiler.functions, global_profiler.capacity * sizeof(function_profile));
+    if (temp == NULL)
     {
+        global_profiler.capacity /= 2;
         return ERROR_MEMORY_ALLOCATION;
     }
-
+    
+    global_profiler.functions = temp;
     return SUCCESS;
 }
