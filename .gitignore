@@ -1,5 +1,7 @@
 .vscode/
 .venv/
+.env
 __pycache__/
 flask_session/
 profiles.db
+uploads/
