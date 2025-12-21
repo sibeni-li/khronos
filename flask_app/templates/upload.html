@@ -8,6 +8,7 @@
     <div class="container mt-4">
         <h1>Upload Profile Data</h1>
         <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="mb-3">
                 <label for="file" class="form-label">Select Profile Data File</label>
                 <input class="form-control" type="file" id="file" name="file" accept="application/json" required>
