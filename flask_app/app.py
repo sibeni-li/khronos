@@ -2,23 +2,35 @@ import json
 import os
 
 from flask import Flask, flash, redirect, render_template, request, send_file, session
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_session import Session
+from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
-
+import config
 from helpers import login_required, validate_json_struct, validate_upload_file, flash_and_render
 from schema import create_table, get_user_by_username, insert_user, insert_analysis, insert_function, get_history, get_analyses, get_analysis_by_id, get_functions_by_analysis_id
 
 app = Flask(__name__)
+csrf = CSRFProtect(app)
 
-# Configure session to use filesystem (instead of signed cookies)
-app.config["SESSION_PERMANENT"] = False
-app.config["SESSION_TYPE"] = "filesystem"
+app.config.from_object(config.DevelopmentConfig if os.getenv("FLASK_ENV") == "development" else config.ProductionConfig)
+
 Session(app)
+
+os.makedirs('uploads', exist_ok=True)
 
 # Initialize database tables
 create_table()
+
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
 
 
 @app.after_request
@@ -48,7 +60,7 @@ def dashboard():
     # Get all analyses for current user
     analyses = get_analyses(session["user_id"])
     if not analyses:
-        flash("You have any analyses uploaded")
+        flash("You don't have any analyses uploaded")
         return redirect("/upload")
 
     # Calculate stats
@@ -89,6 +101,7 @@ def history():
 
 
 @app.route("/login", methods=["GET", "POST"])
+@limiter.limit("5 per minute")
 def login():
     session.clear()
 
@@ -136,6 +149,7 @@ def logout():
 
 
 @app.route("/register", methods=["GET", "POST"])
+@limiter.limit("5 per minute")
 def register():
     if request.method == "POST":
 
@@ -194,7 +208,6 @@ def report(analysis_id):
         nb_functions += 1
         if function["call_count"] > most_call:
             most_call = function["call_count"]
-        print(function["name"])
 
     # Convert functions to JSON for JavaScript charts
     functions_json = json.dumps([dict(function) for function in functions])
@@ -204,6 +217,7 @@ def report(analysis_id):
 
 @app.route("/upload", methods=["GET", "POST"])
 @login_required
+@limiter.limit("50 per day")
 def upload():
     """
     Handle profiler data file uploads
