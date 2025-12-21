@@ -9,7 +9,7 @@ from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import check_password_hash, generate_password_hash
 
 import config
-from helpers import login_required, validate_json_struct, validate_upload_file, flash_and_render
+from helpers import login_required, validate_json_struct, validate_json_values, validate_upload_file,flash_and_render
 from schema import create_table, get_user_by_username, insert_user, insert_analysis, insert_function, get_history, get_analyses, get_analysis_by_id, get_functions_by_analysis_id
 
 app = Flask(__name__)
@@ -226,16 +226,14 @@ def upload():
         if not valid:
             return flash_and_render(result, "upload.html")
 
-        # Secure the filename and save it temporarily
-        req = result
-
         try:
             # Read JSON directly from the file stream without saving to disk
-            data = json.load(req.stream)
+            data = json.load(result.stream)
 
-            # Validate if the JSON structure matches with expected format
+            # Validate if the JSON structure and values matches with expected format
             try:
                 validate_json_struct(data)
+                validate_json_values(data)
             except ValueError as e:
                 return flash_and_render(f"Invalid JSON structure: {str(e)}", "upload.html")
 

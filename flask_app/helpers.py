@@ -41,6 +41,30 @@ def validate_json_struct(data):
         if "name" not in d or "exec_time" not in d or "call_count" not in d or "avg_time" not in d:
             raise ValueError("Invalid JSON structure")
 
+def validate_json_values(data):
+    """
+    Validate types and ranges of JSON profiler data values.
+    """
+    meta = data["metadata"]
+    
+    # Validate metadata
+    if not isinstance(meta["program_name"], str) or not meta["program_name"].strip():
+        raise ValueError("Invalid JSON value")
+    if not isinstance(meta["total_time"], (int, float)) or meta["total_time"] < 0:
+        raise ValueError("Invalid JSON value")
+    if not isinstance(meta["timestamp"], str):
+        raise ValueError("Invalid JSON value")
+    
+    # Validate functions
+    for func in data["functions"]:
+        if not isinstance(func["name"], str) or not func["name"].strip():
+            raise ValueError("Invalid JSON value")
+        if not isinstance(func["exec_time"], (int, float)) or func["exec_time"] < 0:
+            raise ValueError("Invalid JSON value")
+        if not isinstance(func["call_count"], int) or func["call_count"] < 1:
+            raise ValueError("Invalid JSON value")
+        if not isinstance(func["avg_time"], (int, float)) or func["avg_time"] < 0:
+            raise ValueError("Invalid JSON value")
 
 def validate_upload_file(request):
     """
