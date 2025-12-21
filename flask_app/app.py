@@ -7,7 +7,6 @@ from flask_limiter.util import get_remote_address
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import check_password_hash, generate_password_hash
-from werkzeug.utils import secure_filename
 
 import config
 from helpers import login_required, validate_json_struct, validate_upload_file, flash_and_render
@@ -19,8 +18,6 @@ csrf = CSRFProtect(app)
 app.config.from_object(config.DevelopmentConfig if os.getenv("FLASK_ENV") == "development" else config.ProductionConfig)
 
 Session(app)
-
-os.makedirs('uploads', exist_ok=True)
 
 # Initialize database tables
 create_table()
@@ -231,56 +228,48 @@ def upload():
 
         # Secure the filename and save it temporarily
         req = result
-        filename = secure_filename(req.filename)
-        filepath = f"uploads/{filename}"
-        req.save(filepath)
 
         try:
-            # Read and parse JSON file
-            with open(filepath, 'r') as file:
-                data = json.load(file)
+            # Read JSON directly from the file stream without saving to disk
+            data = json.load(req.stream)
 
-                # Validate if the JSON structure matches with expected format
-                try:
-                    validate_json_struct(data)
-                except ValueError as e:
-                    return flash_and_render(f"Invalid JSON structure: {str(e)}", "upload.html")
+            # Validate if the JSON structure matches with expected format
+            try:
+                validate_json_struct(data)
+            except ValueError as e:
+                return flash_and_render(f"Invalid JSON structure: {str(e)}", "upload.html")
 
-                # Save to DB
-                try:
-                    # Insert analysis metadata
-                    analysis_id = insert_analysis(
-                        session["user_id"],
-                        data["metadata"]["program_name"],
-                        data["metadata"]["total_time"],
-                        data["metadata"]["timestamp"]
+            # Save to DB
+            try:
+                # Insert analysis metadata
+                analysis_id = insert_analysis(
+                    session["user_id"],
+                    data["metadata"]["program_name"],
+                    data["metadata"]["total_time"],
+                    data["metadata"]["timestamp"]
+                )
+
+                # Insert each function's profiling data
+                for function in data["functions"]:
+                    insert_function(
+                        analysis_id,
+                        function["name"],
+                        function["exec_time"],
+                        function["call_count"],
+                        function["avg_time"]
                     )
 
-                    # Insert each function's profiling data
-                    for function in data["functions"]:
-                        insert_function(
-                            analysis_id,
-                            function["name"],
-                            function["exec_time"],
-                            function["call_count"],
-                            function["avg_time"]
-                        )
+                # Redirect to report page for newly uploaded analysis
+                return redirect(f"/report/{analysis_id}")
 
-                    # Redirect to report page for newly uploaded analysis
-                    return redirect(f"/report/{analysis_id}")
-
-                except Exception as e:
-                    print(f"Database error in upload: {e}")
-                    return flash_and_render("Database error occurred while saving analysis", "upload.html")
+            except Exception as e:
+                print(f"Database error in upload: {e}")
+                return flash_and_render("Database error occurred while saving analysis", "upload.html")
 
         except json.JSONDecodeError:
             return flash_and_render("Invalid JSON file", "upload.html")
         except Exception as e:
             print(f"Unexpected error in upload: {e}")
             return flash_and_render("An error occurred processing your file", "upload.html")
-        finally:
-            # Clean up temporary file
-            if os.path.exists(filepath):
-                os.remove(filepath)
 
     return render_template("upload.html")

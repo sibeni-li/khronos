@@ -4,4 +4,3 @@
 __pycache__/
 flask_session/
 profiles.db
-uploads/
