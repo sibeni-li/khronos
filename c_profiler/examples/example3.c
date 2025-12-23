@@ -30,7 +30,7 @@ int main(void) {
     profiler_start("task11"); task11(); profiler_stop("task11");
     profiler_start("task12"); task12(); profiler_stop("task12");
     
-    profiler_save_data("test3");
+    profiler_save_data("example3");
     profiler_cleanup();
     return 0;
 }
