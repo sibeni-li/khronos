@@ -9,6 +9,7 @@
 #define ERROR_NOT_RUNNING 5
 #define ERROR_NOT_FOUND 6
 #define ERROR_COULD_NOT_OPEN 7
+#define ERROR_CLOCK_FAILURE 8
 
 // Public prototypes
 int profiler_init(void);
