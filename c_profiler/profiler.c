@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200112L  // For clock_gettime
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +12,7 @@
 typedef struct
 {
     char *name;
-    clock_t start_time;
+    struct timespec start_time;
     double exec_time;
     int call_count;
     bool is_running;
@@ -20,7 +22,7 @@ typedef struct
 typedef struct
 {
     function_profile *functions;
-    double cpu_duration;
+    double duration;
     double total_time;
     int count;
     int capacity;
@@ -76,7 +78,10 @@ int profiler_start(char *fct_name)
         if (global_profiler.functions[i].name != NULL && strcmp(global_profiler.functions[i].name, fct_name) == 0 &&
             global_profiler.functions[i].is_running == false)
         {
-            global_profiler.functions[i].start_time = clock();
+            if (clock_gettime(CLOCK_MONOTONIC, &global_profiler.functions[i].start_time) != 0)
+            {
+                return ERROR_CLOCK_FAILURE;
+            }
             global_profiler.functions[i].call_count += 1;
             global_profiler.functions[i].is_running = true;
             return SUCCESS;
@@ -99,7 +104,11 @@ int profiler_start(char *fct_name)
     strcpy(global_profiler.functions[global_profiler.count].name, fct_name);
 
     // Initialize new function entry
-    global_profiler.functions[global_profiler.count].start_time = clock();
+    if (clock_gettime(CLOCK_MONOTONIC, &global_profiler.functions[global_profiler.count].start_time) != 0)
+    {
+        free(global_profiler.functions[global_profiler.count].name);
+        return ERROR_CLOCK_FAILURE; 
+    }
     global_profiler.functions[global_profiler.count].exec_time = 0.0;
     global_profiler.functions[global_profiler.count].call_count = 1;
     global_profiler.functions[global_profiler.count].is_running = true;
@@ -116,7 +125,11 @@ int profiler_stop(char *fct_name)
     }
 
     bool found = false;
-    clock_t end = clock();
+    struct timespec end_time;
+    if (clock_gettime(CLOCK_MONOTONIC, &end_time) != 0)
+    {
+        return ERROR_CLOCK_FAILURE;
+    }
 
     // Validate function name
     if (fct_name == NULL)
@@ -132,9 +145,11 @@ int profiler_stop(char *fct_name)
             global_profiler.functions[i].is_running == true)
         {
             global_profiler.functions[i].is_running = false;
-            global_profiler.cpu_duration = (double) (end - global_profiler.functions[i].start_time) / CLOCKS_PER_SEC;
-            global_profiler.functions[i].exec_time += global_profiler.cpu_duration;
-            global_profiler.total_time += global_profiler.cpu_duration;
+            global_profiler.duration = end_time.tv_sec - global_profiler.functions[i].start_time.tv_sec;
+            global_profiler.duration += (end_time.tv_nsec - global_profiler.functions[i].start_time.tv_nsec) / 1000000000.0;
+            
+            global_profiler.functions[i].exec_time += global_profiler.duration;
+            global_profiler.total_time += global_profiler.duration;
             found = true;
             break;
         }
