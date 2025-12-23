@@ -3,3 +3,4 @@ Flask-Limiter
 Flask-WTF
 Werkzeug
 python-dotenv
+gunicorn
