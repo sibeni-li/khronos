@@ -31,8 +31,9 @@ typedef struct
 // Global profiler instance
 profiler global_profiler = {NULL, 0, 0, 0, 0};
 
-// Private function prototype
+// Private function prototypes
 int profiler_extend_capacity(void);
+char *escape_json_string(char *input);
 
 int profiler_init(void)
 {
@@ -189,22 +190,40 @@ int profiler_save_data(char *program_name)
         return ERROR_COULD_NOT_OPEN;
     }
 
+    char *escaped_program_name = escape_json_string(program_name);
+    if (escaped_program_name == NULL)
+    {
+        fclose(file);
+        remove(filename); // Clean up incomplete file
+        return ERROR_MEMORY_ALLOCATION;
+    }
+
     // Write JSON opening and metadata
     fprintf(file, "{\n");
     fprintf(file, "  \"metadata\": {\n");
     fprintf(file, "    \"total_time\": %f,\n", global_profiler.total_time);
-    fprintf(file, "    \"program_name\": \"%s\",\n", program_name);
+    fprintf(file, "    \"program_name\": \"%s\",\n", escaped_program_name);
     fprintf(file, "    \"timestamp\": \"%s\"\n", timestamp);
     fprintf(file, "  },\n");
     fprintf(file, "  \"functions\": [\n");
 
+    free(escaped_program_name);
+
     // Write each function's data
     for (int i = 0; i < global_profiler.count; i++)
     {
+        char *escaped_name = escape_json_string(global_profiler.functions[i].name);
+        if (escaped_name == NULL)
+        {
+            fclose(file);
+            remove(filename); // Clean up incomplete file
+            return ERROR_MEMORY_ALLOCATION;
+        }
+
         double avg_time = global_profiler.functions[i].exec_time / global_profiler.functions[i].call_count;
 
         fprintf(file, "    {\"name\": \"%s\", \"exec_time\": %f, \"call_count\": %i, \"avg_time\": %f}",
-                global_profiler.functions[i].name, global_profiler.functions[i].exec_time, global_profiler.functions[i].call_count, avg_time);
+                escaped_name, global_profiler.functions[i].exec_time, global_profiler.functions[i].call_count, avg_time);
         // Add comma between elements, but not after last one
         if (i != global_profiler.count - 1)
         {
@@ -214,6 +233,8 @@ int profiler_save_data(char *program_name)
         {
             fprintf(file, "\n");
         }
+
+        free(escaped_name);
     }
     // Close JSON structure
     fprintf(file, "  ]\n");
@@ -255,4 +276,90 @@ int profiler_extend_capacity(void)
     
     global_profiler.functions = temp;
     return SUCCESS;
+}
+
+char *escape_json_string(char *input)
+{
+    if (input == NULL)
+    {
+        return NULL;
+    
+    }
+
+    int str_len = strlen(input);
+    int escaped_len = 0;
+
+    for (int i = 0; i < str_len; i ++)
+    {
+        switch (input[i])
+        {
+            case '"':
+            case '\\':
+            case '/':
+            case '\n':
+            case '\b':
+            case '\t':
+            case '\r':
+            case '\f':
+                escaped_len += 2;
+                break;
+            default:
+                escaped_len += 1;
+                break;
+        }
+    }
+
+    char *output = malloc(escaped_len + 1);
+    if (output == NULL)
+    {
+        return NULL;
+    }
+
+    int j = 0;
+
+    for (int i = 0; i < str_len; i++)
+    {
+        switch(input[i])
+        {
+            case '"':
+                output[j++] = '\\';
+                output[j++] = '"';
+                break;
+            case '\\':
+                output[j++] = '\\';
+                output[j++] = '\\';
+                break;
+            case '/':
+                output[j++] = '\\';
+                output[j++] = '/';
+                break;
+            case '\n':
+                output[j++] = '\\';
+                output[j++] = 'n';
+                break;
+            case '\b':
+                output[j++] = '\\';
+                output[j++] = 'b';
+                break;
+            case '\t':
+                output[j++] = '\\';
+                output[j++] = 't';
+                break;
+            case '\r':
+                output[j++] = '\\';
+                output[j++] = 'r';
+                break;
+            case '\f':
+                output[j++] = '\\';
+                output[j++] = 'f';
+                break;
+            default:
+                output[j++] = input[i];
+                break;
+        }
+    }
+    
+    output[j] = '\0';
+
+    return output;
 }
