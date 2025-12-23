@@ -4,7 +4,6 @@ import os
 from flask import Flask, flash, redirect, render_template, request, send_file, session
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from flask_session import Session
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -17,7 +16,6 @@ csrf = CSRFProtect(app)
 
 app.config.from_object(config.DevelopmentConfig if os.getenv("FLASK_ENV") == "development" else config.ProductionConfig)
 
-Session(app)
 
 # Initialize database tables
 create_table()

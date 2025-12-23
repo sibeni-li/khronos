@@ -1,6 +1,5 @@
 Flask
 Flask-Limiter
-Flask-Session
 Flask-WTF
 Werkzeug
 python-dotenv
