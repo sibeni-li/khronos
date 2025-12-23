@@ -49,22 +49,22 @@ def validate_json_values(data):
     
     # Validate metadata
     if not isinstance(meta["program_name"], str) or not meta["program_name"].strip():
-        raise ValueError("Invalid JSON value")
+        raise ValueError("Invalid metadata format")
     if not isinstance(meta["total_time"], (int, float)) or meta["total_time"] < 0:
-        raise ValueError("Invalid JSON value")
+        raise ValueError("Invalid metadata format")
     if not isinstance(meta["timestamp"], str):
-        raise ValueError("Invalid JSON value")
+        raise ValueError("Invalid metadata format")
     
     # Validate functions
     for func in data["functions"]:
         if not isinstance(func["name"], str) or not func["name"].strip():
-            raise ValueError("Invalid JSON value")
+            raise ValueError("Invalid function data")
         if not isinstance(func["exec_time"], (int, float)) or func["exec_time"] < 0:
-            raise ValueError("Invalid JSON value")
+            raise ValueError("Invalid function data")
         if not isinstance(func["call_count"], int) or func["call_count"] < 1:
-            raise ValueError("Invalid JSON value")
+            raise ValueError("Invalid function data")
         if not isinstance(func["avg_time"], (int, float)) or func["avg_time"] < 0:
-            raise ValueError("Invalid JSON value")
+            raise ValueError("Invalid function data")
 
 def validate_upload_file(request):
     """

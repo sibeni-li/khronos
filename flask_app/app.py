@@ -235,7 +235,8 @@ def upload():
                 validate_json_struct(data)
                 validate_json_values(data)
             except ValueError as e:
-                return flash_and_render(f"Invalid JSON structure: {str(e)}", "upload.html")
+                print(f"Validation failed for user {session['user_id']}: {e}")
+                return flash_and_render(f"Invalid profiler data format", "upload.html")
 
             # Save to DB
             try:
