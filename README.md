@@ -3,30 +3,30 @@
 
 A complete profiling solution for C programs. Profile your code with a lightweight C library, then upload and visualize performance data through an interactive web dashboard.
 
-## 🎯 Overview
+## Overview
 
 Khronos consists of two integrated components:
 
 1. **C Profiler Library** - Lightweight profiling for C programs with nanosecond precision
 2. **Flask Web Application** - Upload, analyze, and visualize profiling data with interactive charts
 
-## ✨ Features
+## Features
 
 ### C Profiler Library
-- ⚡ Minimal overhead with nanosecond precision timing
-- 📊 JSON export for easy data portability
-- 🎯 Simple 5-function API
-- 🔒 Robust error handling
-- ⏱️ Uses `clock_gettime(CLOCK_MONOTONIC)` for accuracy
+- Minimal overhead with nanosecond precision timing
+- JSON export for easy data portability
+- Simple 5-function API
+- Robust error handling
+- Uses `clock_gettime(CLOCK_MONOTONIC)` for accuracy
 
 ### Web Application
-- 📈 Interactive charts (bar charts, pie charts)
-- 🗂️ Analysis history and dashboard
-- 👤 User authentication and session management
-- 🔐 CSRF protection and rate limiting
-- 📱 Responsive Bootstrap UI
+- Interactive charts (bar charts, pie charts)
+- Analysis history and dashboard
+- User authentication and session management
+- CSRF protection and rate limiting
+- Responsive Bootstrap UI
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 khronos/
@@ -51,7 +51,7 @@ khronos/
 └── README.md            # Web app documentation
 ```
 
-## 🚀 How It Works
+## How It Works
 
 ```
 ┌─────────────────┐
@@ -82,7 +82,7 @@ khronos/
 └─────────────────┘
 ```
 
-## 🛠️ Getting Started
+## Getting Started
 
 ### C Profiler Library
 
@@ -131,4 +131,4 @@ Visit the deployed application at [https://khronos.sibeni.dev] to:
 - The C profiler is **single-threaded only** and not thread-safe
 - Requires POSIX-compliant system (Linux, macOS, BSD)
 
-## 📝 License
+## License

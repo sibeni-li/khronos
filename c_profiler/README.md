@@ -4,11 +4,11 @@ A lightweight, easy-to-use profiling library for C programs. Measure execution t
 
 ## Features
 
-- ⚡ **Minimal overhead** - Lightweight design with nanosecond precision
-- 📊 **JSON export** - Easy integration with visualization tools
-- 🎯 **Simple API** - Just 5 functions to profile your code
-- 🔒 **Robust** - Proper error handling and memory management
-- ⏱️ **Accurate timing** - Uses `clock_gettime(CLOCK_MONOTONIC)` for precise measurements
+- **Minimal overhead** - Lightweight design with nanosecond precision
+- **JSON export** - Easy integration with visualization tools
+- **Simple API** - Just 5 functions to profile your code
+- **Robust** - Proper error handling and memory management
+- **Accurate timing** - Uses `clock_gettime(CLOCK_MONOTONIC)` for precise measurements
 
 ## Requirements
 
